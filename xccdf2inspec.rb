@@ -31,7 +31,7 @@ require 'hashie'
 #
 # @options asldkfjasldkfjlaksdjf
 #
-options = {:xccdf => nil, :cci => nil}
+options = {:xccdf => nil, :cci => nil, :output => nil, :group => nil}
 
 parser = OptionParser.new do|opts|
 	opts.banner = "Usage: xccdf2inspec.rb [options]"
@@ -42,6 +42,11 @@ parser = OptionParser.new do|opts|
 	opts.on('-c', '--cci cci', 'the path to the cci xml file') do |cci|
 		options[:cci] = cci;
 	end
+
+	opts.on('-g', '--group V-72857', 'The name of the specific group you want to process
+	in the XCCDF file') do |group|
+    options[:group] = group;
+  end
 
   opts.on('-o', '--output output.rb', 'The name of the inspec file you want') do |output|
     options[:output] = output;
@@ -65,9 +70,10 @@ if options[:cci] == nil
     options[:cci] = gets.chomp
 end
 
-if options[:output] == nil
-	print 'Your controls are in ./inspec.rb '
-end
+# @todo fix this when we get the control.rb object working
+#if options[:output] == nil
+#	print 'Your controls are in ./inspec.rb '
+#end
 
 xccdf_file = options[:xccdf].to_s
 cci_file = options[:cci].to_s
@@ -131,7 +137,7 @@ xccdf.remove_namespaces!
     return impact
   end
 
-  # @!method get_nist_reference(cci_xml_file, cci_number)
+  # @!method get_nist_reference(cci_xml_file, cci_number,group)
   #   Finds the most recent NIST 800-53 Control Identifier linked to the
   #   {#cci_number}
   # @param [FileHandle] cci_xml_file the open file handle of the disa cci xml
@@ -144,7 +150,7 @@ xccdf.remove_namespaces!
   #   return nil.
   # @todo This should return a hash
   #
-  def xccdf_to_inspec(file,cci_file)
+  def xccdf_to_inspec(file,cci_file,group)
 
 	# @todo hash for the inspec control objects
 	# key is the value of the control_name
@@ -153,7 +159,13 @@ xccdf.remove_namespaces!
 	# @todo the inspec control object for this itteration
 	# curr_control = new inspec.control()
 
-    file.xpath('//Benchmark/Group').each do |node|
+  if group.nil?
+		benchmark_xpath = "//Benchmark/Group"
+	else
+		benchmark_xpath = "//Benchmark/Group[@id='"+group+"']"
+	end
+
+    file.xpath(benchmark_xpath).each do |node|
       control_name = node.xpath('./@id').text
       severity = node.xpath('./Rule/@severity').text
       impact = get_impact(severity)
@@ -165,28 +177,31 @@ xccdf.remove_namespaces!
       nist = get_nist_reference(cci_file,cci)
       control_title = node.xpath('./Rule/title').text
       control_desc = node.xpath('./Rule/description').text.gsub(/\<.*?\>/, '')
-      check = node.xpath('./Reule/check/check-content').text
+      check = node.xpath('./Rule/check/check-content').text
       fix = node.xpath('./Rule/fixtext').text
 
-      puts control_name
-      puts severity
-      puts impact
-      puts group_title
-      puts group_id
-      puts rule_id
-      puts stig_id
-      puts cci
-      puts nist.shift
-      puts nist.shift
-      puts control_title
-      puts control_desc
-      puts check
-      puts fix
+      puts "control '" + control_name.to_s + "'" + " do "
+			puts "  impact: " + impact.to_s
+			puts "  tag severity: '" + severity.to_s + "'" + "\n\n"
+      puts "  tag gtitle: '" + group_title.to_s + "'"
+      puts "  tag gid: '" + group_id.to_s + "'"
+      puts "  tag rid: '" + rule_id.to_s + "'"
+      puts "  tag stigid: '" + stig_id.to_s + "'" + "\n\n"
+      puts "  tag cci: '" + cci.to_s + "'"
+      puts "  tag nist: '" + nist.shift.to_s + "'"
+      puts "  tag nist_rev: '" + nist.shift.to_s + "'" + "\n\n"
+      puts "  tag title: '" + control_title.to_s + "'"
+      puts "  tag desc: '" + control_desc.to_s + "'"
+      puts "  tag check: '" + check.to_s + "'"
+      puts "  tag fix: '" + fix.to_s + "'" + "\n\n"
+			puts "  describe ' ' do" + "\n\n"
+			puts "  end"
+			puts "end" + "\n\n"
   end
   # it should just return a hash of InSpec crontrol objects here ...
 end
 
-xccdf_to_inspec(xccdf,cci_xml)
+xccdf_to_inspec(xccdf,cci_xml,options[:group])
 
 =begin
 
