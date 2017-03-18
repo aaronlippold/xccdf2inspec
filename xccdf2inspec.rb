@@ -222,7 +222,7 @@ xccdf_to_inspec(xccdf,cci_xml)
     # These come from basically the same source, I will have to figure out a way to simplily title vs desc
     desc 'The EDB Postgres Advanced Server must limit the number of concurrent
           sessions to an organization-defined number per user for all accounts
-          and/or account types. Note: listed as Rule Title in the document.[/Group/Rule/title/.]'
+          and/or account types. Note: listed as Rule Title in the document.[/Group/Rule/description/.]'
     {newline}
     tag check:'Determine whether the system documentation specifies limits on the
               number of concurrent DBMS sessions per account by type of user. If
