@@ -96,16 +96,22 @@ xccdf.remove_namespaces!
   #   in.
   # @todo account for the case when we don't find the CCI passed in, we should
   #   return nil. i.e. use the {#status} var.
-  #
-  def get_nist_reference(cci_xml_file,cci_number)
+  # @todo this needs to be refactored. It works if there is only one <ident>
+	#   node in the nodeSet, It does not actually account for the fact that the
+	#   opbject that are being passed to it could have more than one element.
+	#   Specicically that cci_number is a nodeSet and needs to be looped over to
+	#   pull all the CCI numbers then the mapping needs to happen.
+
+  def get_nist_reference(cci_file,cci_number)
     nist_ref = nil
     nist_ver = nil
     status = nil
-    cci_xml_file.xpath('//cci_list/cci_items/cci_item').each do |item_nodes|
+
+    cci_file.xpath('//cci_list/cci_items/cci_item').each do |item_nodes|
       curr_id = item_nodes.xpath('./@id').text
       status = case curr_id
         when cci_number then
-          status = "found"
+					# this ensures that I only get the highest nist version cci number
           nist_ref = item_nodes.xpath('./references/reference[not(@version <= preceding-sibling::reference/@version) and not(@version <=following-sibling::reference/@version)]/@index').text
           nist_ver = item_nodes.xpath('./references/reference[not(@version <= preceding-sibling::reference/@version) and not(@version <=following-sibling::reference/@version)]/@version').text
       end
