@@ -146,12 +146,12 @@ xccdf.remove_namespaces!
   #
   def xccdf_to_inspec(file,cci_file)
 
-		# @todo hash for the inspec control objects
-		# key is the value of the control_name
-		# controls = Hash.new { |hash, key| hash[key] = {} }
+	# @todo hash for the inspec control objects
+	# key is the value of the control_name
+	# controls = Hash.new { |hash, key| hash[key] = {} }
 
-		# @todo the inspec control object for this itteration
-		# curr_control = new inspec.control()
+	# @todo the inspec control object for this itteration
+	# curr_control = new inspec.control()
 
     file.xpath('//Benchmark/Group').each do |node|
       control_name = node.xpath('./@id').text
