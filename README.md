@@ -1,7 +1,5 @@
 # xccdf2inspec
-The XCCDF to InSpec parser scans and extracts the Controls defined in the DISA
-XCCDF STIG XML documents and converts them into InSpec controls to help make
-writing InSpec profiles based on the controls defined in DISA STIG documents.
+WIP: The XCCDF to InSpec parser scans and extracts the controls defined in the DISA XCCDF STIG XML documents and converts them into InSpec control 'stubs' to help ease the pain of inspec profile developers everywhere.
 
 # Usage
 
