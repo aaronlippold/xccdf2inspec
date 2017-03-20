@@ -1,4 +1,4 @@
-#!/usr/local/bin/ruby
+#!/usr/bin/ruby
 require 'nokogiri'
 require 'optparse'
 require 'hashie'
@@ -107,15 +107,9 @@ xccdf.remove_namespaces!
     nist_ver = nil
     status = nil
 
-    cci_file.xpath('//cci_list/cci_items/cci_item').each do |item_nodes|
-      curr_id = item_nodes.xpath('./@id').text
-      status = case curr_id
-        when cci_number then
-					# this ensures that I only get the highest nist version cci number
-          nist_ref = item_nodes.xpath('./references/reference[not(@version <= preceding-sibling::reference/@version) and not(@version <=following-sibling::reference/@version)]/@index').text
-          nist_ver = item_nodes.xpath('./references/reference[not(@version <= preceding-sibling::reference/@version) and not(@version <=following-sibling::reference/@version)]/@version').text
-      end
-    end
+    item_node = cci_file.xpath("//cci_list/cci_items/cci_item[@id='#{cci_number}']")[0]
+    nist_ref = item_node.xpath('./references/reference[not(@version <= preceding-sibling::reference/@version) and not(@version <=following-sibling::reference/@version)]/@index').text
+    nist_ver = item_node.xpath('./references/reference[not(@version <= preceding-sibling::reference/@version) and not(@version <=following-sibling::reference/@version)]/@version').text
     return nist_ref,nist_ver
   end
 
@@ -156,7 +150,7 @@ xccdf.remove_namespaces!
   #   return nil.
   # @todo This should return a hash
   #
-  def xccdf_to_inspec(file,cci_file,group)
+  def xccdf_to_inspec(file,cci_file,group,out)
 
 	# @todo hash for the inspec control objects
 	# key is the value of the control_name
@@ -179,35 +173,43 @@ xccdf.remove_namespaces!
       group_id = node.xpath('./@id').text
       rule_id = node.xpath('./Rule/@id').text
       stig_id = node.xpath('./Rule/version').text
-      cci = node.xpath('./Rule/ident').text
-      nist = get_nist_reference(cci_file,cci)
       control_title = node.xpath('./Rule/title').text
       control_desc = node.xpath('./Rule/description').text.gsub(/\<.*?\>/, '')
       check = node.xpath('./Rule/check/check-content').text
       fix = node.xpath('./Rule/fixtext').text
 
-      puts "control '" + control_name.to_s + "'" + " do "
-			puts "  impact: " + impact.to_s
-			puts "  tag severity: '" + severity.to_s + "'" + "\n\n"
-      puts "  tag gtitle: '" + group_title.to_s + "'"
-      puts "  tag gid: '" + group_id.to_s + "'"
-      puts "  tag rid: '" + rule_id.to_s + "'"
-      puts "  tag stigid: '" + stig_id.to_s + "'" + "\n\n"
-      puts "  tag cci: '" + cci.to_s + "'"
-      puts "  tag nist: '" + nist.shift.to_s + "'"
-      puts "  tag nist_rev: '" + nist.shift.to_s + "'" + "\n\n"
-      puts "  tag title: '" + control_title.to_s + "'"
-      puts "  tag desc: '" + control_desc.to_s + "'"
-      puts "  tag check: '" + check.to_s + "'"
-      puts "  tag fix: '" + fix.to_s + "'" + "\n\n"
-			puts "  describe ' ' do" + "\n\n"
-			puts "  end"
-			puts "end" + "\n\n"
+      out.puts "control '" + control_name.to_s + "'" + " do "
+			out.puts "  impact: " + impact.to_s
+			out.puts "  tag severity: '" + severity.to_s + "'" + "\n\n"
+      out.puts "  tag gtitle: '" + group_title.to_s + "'"
+      out.puts "  tag gid: '" + group_id.to_s + "'"
+      out.puts "  tag rid: '" + rule_id.to_s + "'"
+      out.puts "  tag stigid: '" + stig_id.to_s + "'" + "\n\n"
+      node.xpath('./Rule/ident').each do |cci_node|
+        cci = cci_node.text
+        nist, nist_rev = get_nist_reference(cci_file,cci)
+        out.puts "  tag cci: '" + cci.to_s + "'"
+        out.puts "  tag nist: '" + nist.to_s + "'"
+        out.puts "  tag nist_rev: '" + nist_rev.to_s + "'" + "\n\n"
+      end
+      out.puts "  tag title: '" + control_title.to_s + "'"
+      out.puts "  tag desc: '" + control_desc.to_s + "'"
+      out.puts "  tag check: '" + check.to_s + "'"
+      out.puts "  tag fix: '" + fix.to_s + "'" + "\n\n"
+			out.puts "  describe ' ' do" + "\n\n"
+			out.puts "  end"
+			out.puts "end" + "\n\n"
   end
   # it should just return a hash of InSpec crontrol objects here ...
 end
 
-xccdf_to_inspec(xccdf,cci_xml,options[:group])
+out = if options[:output]
+  File.open(options[:output], "w")
+else
+  $stdout
+end
+xccdf_to_inspec(xccdf,cci_xml,options[:group],out)
+out.close if options[:output]
 
 =begin
 
