@@ -6,6 +6,7 @@ require 'hashie'
 
 #
 # @author Aaron Lippold, lippold@gmail.com
+# @author Michael Limiero
 # @abstract XCCDF to InSpec Stubs Parser
 #   The XCCDF to InSpec Parser scans and extracts the Controls defined in the
 #   DISA XCCDF STIG XML documents and converts them into InSpec controls to
@@ -70,20 +71,20 @@ if options[:cci] == nil
     options[:cci] = gets.chomp
 end
 
-# @todo fix this when we get the control.rb object working
-#if options[:output] == nil
-#	print 'Your controls are in ./inspec.rb '
-#end
+# File output, either the file passed to the -o option, or to $stdout
+out = if options[:output]
+  File.open(options[:output], "w")
+else
+  $stdout
+end
 
 xccdf_file = options[:xccdf].to_s
 cci_file = options[:cci].to_s
 
 cci_xml = Nokogiri::XML(File.open(cci_file))
-xccdf = Nokogiri::XML(File.open(xccdf_file))
 cci_xml.remove_namespaces!
+xccdf = Nokogiri::XML(File.open(xccdf_file))
 xccdf.remove_namespaces!
-
-# output = inSpec control object
 
   # @!method get_nist_reference(cci_xml_file, cci_number)
   #   Finds the most recent NIST 800-53 Control Identifier linked to the
@@ -101,12 +102,9 @@ xccdf.remove_namespaces!
 	#   opbject that are being passed to it could have more than one element.
 	#   Specicically that cci_number is a nodeSet and needs to be looped over to
 	#   pull all the CCI numbers then the mapping needs to happen.
-
   def get_nist_reference(cci_file,cci_number)
     nist_ref = nil
     nist_ver = nil
-    status = nil
-
     item_node = cci_file.xpath("//cci_list/cci_items/cci_item[@id='#{cci_number}']")[0]
     nist_ref = item_node.xpath('./references/reference[not(@version <= preceding-sibling::reference/@version) and not(@version <=following-sibling::reference/@version)]/@index').text
     nist_ver = item_node.xpath('./references/reference[not(@version <= preceding-sibling::reference/@version) and not(@version <=following-sibling::reference/@version)]/@version').text
@@ -159,6 +157,13 @@ xccdf.remove_namespaces!
 	# @todo the inspec control object for this itteration
 	# curr_control = new inspec.control()
 
+  # @todo update the passed in --group options to default to an array so that
+	# we can select a subset of the controls we wish to process to InSpec format.
+	# Changes:
+	# - the documentation
+	# - the method dec
+	# - the else case would have to loop over the array and update the xpath
+
   if group.nil?
 		benchmark_xpath = "//Benchmark/Group"
 	else
@@ -192,9 +197,9 @@ xccdf.remove_namespaces!
         out.puts "  tag nist: '" + nist.to_s + "'"
         out.puts "  tag nist_rev: '" + nist_rev.to_s + "'" + "\n\n"
       end
-      out.puts "  tag title: '" + control_title.to_s + "'"
-      out.puts "  tag desc: '" + control_desc.to_s + "'"
-      out.puts "  tag check: '" + check.to_s + "'"
+      out.puts "  tag title: '" + control_title.to_s + "'" + "\n\n"
+      out.puts "  tag desc: '" + control_desc.to_s + "'" + "\n\n"
+      out.puts "  tag check: '" + check.to_s + "'" + "\n\n"
       out.puts "  tag fix: '" + fix.to_s + "'" + "\n\n"
 			out.puts "  describe ' ' do" + "\n\n"
 			out.puts "  end"
@@ -203,11 +208,6 @@ xccdf.remove_namespaces!
   # it should just return a hash of InSpec crontrol objects here ...
 end
 
-out = if options[:output]
-  File.open(options[:output], "w")
-else
-  $stdout
-end
 xccdf_to_inspec(xccdf,cci_xml,options[:group],out)
 out.close if options[:output]
 
