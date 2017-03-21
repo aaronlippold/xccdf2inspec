@@ -17,6 +17,6 @@ Usage: xccdf2inspec.rb [options]
 ## Assumptions
 
 ## Known Issues
- - Currenly can only sub-process one group item - i.e. stig control, we are working on adding the ability to process a comma seperated list you can pass in.
+ - Currenly can only sub-process one group item - i.e. stig control - or the entire file. We are working on adding the ability to process a comma seperated list you can pass in. So for now it's 'all or one', and done.
  - The parser currently has issues with escaping chars in some of the text blocks which is causing issues "downstream" with the controls. We are currently working on this issue.
  - TBD :)
