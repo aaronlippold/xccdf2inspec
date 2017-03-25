@@ -11,4 +11,4 @@ The parser requires two files:
   a. Info: http://iase.disa.mil/stigs/cci/Pages/index.aspx
   b. File: http://iasecontent.disa.mil/stigs/zip/u_cci_list.zip
 
-All test data has been produced by DISA. For any information or questions, please contact IASE at support at http://iase.disa.mil/help/Pages/index.aspx
+All test data has been produced by DISA. For any information or questions, please contact IASE.
