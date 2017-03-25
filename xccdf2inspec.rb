@@ -1,11 +1,11 @@
-#!/usr/bin/ruby
+#!/usr/local/bin/ruby
+gem 'inspec','>=1.17.0'
+require 'inspec'
 require 'nokogiri'
 require 'optparse'
-require 'hashie'
-require 'pp'
-# require 'inspec/lib/control.rb'
-
-#
+require 'inspec/objects'
+script_version = 1.0
+# @version 1.0
 # @author Aaron Lippold, lippold@gmail.com
 # @author Michael Limiero
 # @abstract XCCDF to InSpec Stubs Parser
@@ -33,50 +33,65 @@ require 'pp'
 #
 # @options asldkfjasldkfjlaksdjf
 #
-options = {:xccdf => nil, :cci => nil, :output => nil, :group => nil}
+options = {
+  xccdf: nil,
+  cci: nil,
+  output: nil,
+  group: nil,
+  format: nil
+}
 
-parser = OptionParser.new do|opts|
-	opts.banner = "Usage: xccdf2inspec.rb [options]"
-	opts.on('-x', '--xccdf xccdf', 'the path to the disa stig xccdf file') do |xccdf|
-		options[:xccdf] = xccdf;
-	end
-
-	opts.on('-c', '--cci cci', 'the path to the cci xml file') do |cci|
-		options[:cci] = cci;
-	end
-
-	opts.on('-g', '--group V-72857', 'The name of the specific group you want to process
-	in the XCCDF file') do |group|
-    options[:group] = group;
+parser = OptionParser.new do |opts|
+  opts.banner = 'Usage: xccdf2inspec.rb [options]'
+  opts.on('-x', '--xccdf xccdf', 'the path to the disa stig xccdf file') do |xccdf|
+    options[:xccdf] = xccdf
   end
+
+  opts.on('-c', '--cci cci', 'the path to the cci xml file') do |cci|
+    options[:cci] = cci
+  end
+
+  opts.on('-g', '--group group1,group2,group3', 'A CSV list of the group you want to process
+	in the XCCDF file') do |group|
+   options[:group] = group
+ end
 
   opts.on('-o', '--output output.rb', 'The name of the inspec file you want') do |output|
-    options[:output] = output;
+    options[:output] = output
   end
 
-	opts.on('-h', '--help', 'Displays Help') do
-		puts opts
-		exit
-	end
+  opts.on('-f', '--format [ruby|hash]', 'The format you would like (defualt: ruby)') do |form|
+    options[:form] = form
+  end
+
+  opts.on('-v', '--version', 'xccdf2inspec version') do
+    puts 'xccdf2inspec: version ' + script_version.to_s
+    exit
+  end
+
+  opts.on('-h', '--help', 'Displays Help') do
+    puts opts
+    exit
+  end
 end
 
 parser.parse!
 
-if options[:xccdf] == nil
-	print 'Enter the path to your XCCDF file: '
-    options[:xccdf] = gets.chomp
+if options[:xccdf].nil?
+  print 'Enter the path to your XCCDF file: '
+  options[:xccdf] = gets.chomp
 end
 
-if options[:cci] == nil
-	print 'Enter the path to your CCI file: '
-    options[:cci] = gets.chomp
+if options[:cci].nil?
+  print 'Enter the path to your CCI file: '
+  options[:cci] = gets.chomp
 end
 
 # File output, either the file passed to the -o option, or to $stdout
 out = if options[:output]
-  File.open(options[:output], "w")
-else
-  $stdout
+        File.open(options[:output], 'w')
+      else
+        $stdout
 end
 
 xccdf_file = options[:xccdf].to_s
@@ -87,188 +102,137 @@ cci_xml.remove_namespaces!
 xccdf = Nokogiri::XML(File.open(xccdf_file))
 xccdf.remove_namespaces!
 
-  # @!method get_nist_reference(cci_xml_file, cci_number)
-  #   Finds the most recent NIST 800-53 Control Identifier linked to the
-  #   #{cci_number}
-  # @param [FileHandle] cci_xml_file the open file handle of the disa cci xml
-  # @param [String] cci_number the CCI number you are using to query the xml
-  #
-  # @return [Array<String>, nil] an array containing the CCI Control Number and
-  #   the version of the NIST 800-53 Revision the Control identifer is published
-  #   in.
-  # @todo account for the case when we don't find the CCI passed in, we should
-  #   return nil. i.e. use the {#status} var.
-  # @todo this needs to be refactored. It works if there is only one <ident>
-	#   node in the nodeSet, It does not actually account for the fact that the
-	#   opbject that are being passed to it could have more than one element.
-	#   Specicically that cci_number is a nodeSet and needs to be looped over to
-	#   pull all the CCI numbers then the mapping needs to happen.
-  def get_nist_reference(cci_file,cci_number)
-    nist_ref = nil
-    nist_ver = nil
-    item_node = cci_file.xpath("//cci_list/cci_items/cci_item[@id='#{cci_number}']")[0]
-    nist_ref = item_node.xpath('./references/reference[not(@version <= preceding-sibling::reference/@version) and not(@version <=following-sibling::reference/@version)]/@index').text
-    nist_ver = item_node.xpath('./references/reference[not(@version <= preceding-sibling::reference/@version) and not(@version <=following-sibling::reference/@version)]/@version').text
-    return nist_ref,nist_ver
-  end
+output_format = options[:form].to_s
 
-  # @!method get_impact(severity)
-  #   Takes in the STIG severity tag and converts it to the InSpec #{impact}
-  #   control tag.
-  #   At the moment the mapping is static, so that:
-  #     high => 0.7
-  #     medium => 0.5
-  #     low => 0.3
-  # @param [String] cci_number the CCI number you are using to query the xml
-  #
-  # @return [Float] The impact value as mapped above see: above
-  #
-  # @todo Allow for the user to pass in a hash for the desired mapping of text
-  #   values to numbers or to override our hard coded values.
-  #
-  def get_impact(severity)
-    impact = nil
-    impact = case severity
-      when 'low' then 0.3
-      when 'medium' then 0.5
-      else 0.7
-    end
-    return impact
-  end
-
-  # @!method get_nist_reference(cci_xml_file, cci_number,group)
-  #   Finds the most recent NIST 800-53 Control Identifier linked to the
-  #   {#cci_number}
-  # @param [FileHandle] cci_xml_file the open file handle of the disa cci xml
-  # @param [String] cci_number the CCI number you are using to query the xml
-  #
-  # @return [Array<String>, nil] an array containing the CCI Control Number and
-  #   the version of the NIST 800-53 Revision the Control identifer is published
-  #   in.
-  # @todo account for the case when we don't find the CCI passed in, we should
-  #   return nil.
-  # @todo This should return a hash
-  #
-  def xccdf_to_inspec(file,cci_file,group,out)
-
-	# @todo hash for the inspec control objects
-	# key is the value of the control_name
-	# controls = Hash.new { |hash, key| hash[key] = {} }
-
-	# @todo the inspec control object for this itteration
-	# curr_control = new inspec.control()
-
-  # @todo update the passed in --group options to default to an array so that
-	# we can select a subset of the controls we wish to process to InSpec format.
-	# Changes:
-	# - the documentation
-	# - the method dec
-	# - the else case would have to loop over the array and update the xpath
-
-  if group.nil?
-		benchmark_xpath = "//Benchmark/Group"
-	else
-		benchmark_xpath = "//Benchmark/Group[@id='"+group+"']"
-	end
-
-    file.xpath(benchmark_xpath).each do |node|
-      control_name = node.xpath('./@id').text
-      severity = node.xpath('./Rule/@severity').text
-      impact = get_impact(severity)
-      group_title = node.xpath('./title').text
-      group_id = node.xpath('./@id').text
-      rule_id = node.xpath('./Rule/@id').text
-      stig_id = node.xpath('./Rule/version').text
-      control_title = node.xpath('./Rule/title').text
-      control_desc = node.xpath('./Rule/description').text.gsub(/\<.*?\>/, '')
-      check = node.xpath('./Rule/check/check-content').text
-      fix = node.xpath('./Rule/fixtext').text
-
-      out.puts "control '" + control_name.to_s + "'" + " do "
-			out.puts "  impact: " + impact.to_s
-			out.puts "  tag severity: '" + severity.to_s + "'" + "\n\n"
-      out.puts "  tag gtitle: '" + group_title.to_s + "'"
-      out.puts "  tag gid: '" + group_id.to_s + "'"
-      out.puts "  tag rid: '" + rule_id.to_s + "'"
-      out.puts "  tag stigid: '" + stig_id.to_s + "'" + "\n\n"
-      node.xpath('./Rule/ident').each do |cci_node|
-        cci = cci_node.text
-        nist, nist_rev = get_nist_reference(cci_file,cci)
-        out.puts "  tag cci: '" + cci.to_s + "'"
-        out.puts "  tag nist: '" + nist.to_s + "'"
-        out.puts "  tag nist_rev: '" + nist_rev.to_s + "'" + "\n\n"
-      end
-      out.puts "  tag title: '" + control_title.to_s + "'" + "\n\n"
-      out.puts "  tag desc: '" + control_desc.to_s + "'" + "\n\n"
-      out.puts "  tag check: '" + check.to_s + "'" + "\n\n"
-      out.puts "  tag fix: '" + fix.to_s + "'" + "\n\n"
-			out.puts "  describe ' ' do" + "\n\n"
-			out.puts "  end"
-			out.puts "end" + "\n\n"
-  end
-  # it should just return a hash of InSpec crontrol objects here ...
+# @!method get_nist_reference(cci_xml_file, cci_number)
+#   Finds the most recent NIST 800-53 Control Identifier linked to the
+#   #{cci_number}
+# @param [FileHandle] cci_xml_file the open file handle of the disa cci xml
+# @param [String] cci_number the CCI number you are using to query the xml
+#
+# @return [Array<String>, nil] an array containing the CCI Control Number and
+#   the version of the NIST 800-53 Revision the Control identifer is published
+#   in.
+# @todo account for the case when we don't find the CCI passed in, we should
+#   return nil. i.e. use the {#status} var.
+# @todo this needs to be refactored. It works if there is only one <ident>
+#   node in the nodeSet, It does not actually account for the fact that the
+#   opbject that are being passed to it could have more than one element.
+#   Specicically that cci_number is a nodeSet and needs to be looped over to
+#   pull all the CCI numbers then the mapping needs to happen.
+def get_nist_reference(cci_file, cci_number)
+  nist_ref = nil
+  nist_ver = nil
+  item_node = cci_file.xpath("//cci_list/cci_items/cci_item[@id='#{cci_number}']")[0]
+  nist_ref = item_node.xpath('./references/reference[not(@version <= preceding-sibling::reference/@version) and not(@version <=following-sibling::reference/@version)]/@index').text
+  nist_ver = item_node.xpath('./references/reference[not(@version <= preceding-sibling::reference/@version) and not(@version <=following-sibling::reference/@version)]/@version').text
+  [nist_ref, nist_ver]
 end
 
-xccdf_to_inspec(xccdf,cci_xml,options[:group],out)
-out.close if options[:output]
+# @!method get_impact(severity)
+#   Takes in the STIG severity tag and converts it to the InSpec #{impact}
+#   control tag.
+#   At the moment the mapping is static, so that:
+#     high => 0.7
+#     medium => 0.5
+#     low => 0.3
+# @param [String] cci_number the CCI number you are using to query the xml
+#
+# @return [Float] The impact value as mapped above see: above
+#
+# @todo Allow for the user to pass in a hash for the desired mapping of text
+#   values to numbers or to override our hard coded values.
+#
+def get_impact(severity)
+  impact = nil
+  impact = case severity
+           when 'low' then 0.3
+           when 'medium' then 0.5
+           else 0.7
+  end
+  impact
+end
 
-=begin
+# @!method get_nist_reference(cci_xml_file, cci_number,group)
+#   Finds the most recent NIST 800-53 Control Identifier linked to the
+#   {#cci_number}
+# @param [FileHandle] cci_xml_file the open file handle of the disa cci xml
+# @param [String] cci_number the CCI number you are using to query the xml
+#
+# @return [Array<String>, nil] an array containing the CCI Control Number and
+#   the reversion of the NIST 800-53 Revision the Control identifer is published
+#   in.
+# @todo account for the case when we don't find the CCI passed in, we should
+#   return nil.
+#
+def xccdf_to_inspec(file, cci_file, group, out, output_format)
+  # @todo hash for the inspec control objects
+  # key is the value of the control_name
+  # controls = Hash.new { |hash, key| hash[key] = {} }
+  # @todo we need to add the ref item to the inspec control object.
 
-=== start template ===
-  control 'V-68875' do
-    # This requires an 'if statment' on the the value of [/Group/Rule/@severity], i.e. mapping the range
-    impact 0.5 [/Group/Rule/@severity] @severity{0.3 if 'low'; 0.5 if 'medium' ; 0.8 if 'high'}}
-    tag severity: 'medium[/Group/Rule/@severity]'
-    {newline}
-    tag gtitle: 'SRG-APP-000001-DB-000031[/Group/title/.]'
-    tag gid: 'V-68875[/Group/@id]'
-    tag rid: 'SV-83479r1_rule[/Group/Rule/@id]'
-    tag stigid: 'PPS9-00-000100[/Group/Rule/version/.]'
-    {newline}
-      # The NIST reference comes from another XML file from DISA, the value is linked to the CCI number
-      # and must be extracted from another file.
-      # You will note, the references() has more than one child, I am looking for the vlaue of the
-      # @index attribute whoes element has the @version value of '4'
-      # Note: **There have been cases where there have been more than 1 CCI tag and NIST tag.**
-    tag nist: 'AC-10' [U_CCI_List.xml/cci_items/cci_item/references/reference[@version = '4']/@index]
-    tag cci: 'CCI-000054'[/Group/Rule/ident/.]
-    {newline}
-      # This string could be generated off elements in the:
-      # [/Benchmark/title] and
-      # [/Benchmark/<plain-text id="release-info">/.]
-      # [/Benchmark/version/.]
-      # U_ would be a static part of the string, as would _STIG.zip and http://iasecontent.disa.mil/stigs/zip/
-    ref 'http://iasecontent.disa.mil/stigs/zip/Oct2016[/Benchmark//U_EDB_Postgres_Advanced_Server_V1R2_STIG.zip[xsl paramater I set or pass in?]'
-    {newline}
-    title 'Limit the number of concurrent sessions to an organization-defined
-            number per user for all accounts and/or account types.[/Group/Rule/title/.]'
-    {newline}
-    # These come from basically the same source, I will have to figure out a way to simplily title vs desc
-    desc 'The EDB Postgres Advanced Server must limit the number of concurrent
-          sessions to an organization-defined number per user for all accounts
-          and/or account types. Note: listed as Rule Title in the document.[/Group/Rule/description/.]'
-    {newline}
-    tag check:'Determine whether the system documentation specifies limits on the
-              number of concurrent DBMS sessions per account by type of user. If
-              it does not, assume a limit of 10 for database administrators and 2
-              for all other users. Execute the following SQL as enterprisedb:
+  if group.nil?
+    benchmark_xpath = '//Benchmark/Group'
+  else
+    string = '[@id='
+    values = group.split(/,/)
+    values.each do |v|
+      string << if v.equal? values.last
+                  "'" + v.to_s + "']"
+                else
+                  "'" + v.to_s + "'or @id="
+                end
+    end
+    benchmark_xpath = '//Benchmark/Group' + string
+    end
 
-              SELECT rolname, rolconnlimit FROM pg_roles;
+  file.xpath(benchmark_xpath).each do |node|
+    control = Inspec::Control.new
+    control.id = node.xpath('./@id').text
+    control.impact = get_impact(node.xpath('./Rule/@severity').text)
+    control.add_tag(Inspec::Tag.new('severity', node.xpath('./Rule/@severity').text))
+    # control.add_newline (nice to have @chris-rock)
+    control.add_tag(Inspec::Tag.new('gtitle', node.xpath('./title').text))
+    control.add_tag(Inspec::Tag.new('gid', node.xpath('./@id').text))
+    control.add_tag(Inspec::Tag.new('rid', node.xpath('./Rule/@id').text))
+    control.add_tag(Inspec::Tag.new('stig_id', node.xpath('./Rule/version').text))
+    # control.add_newline (nice to have @chris-rock)
+    node.xpath('./Rule/ident').each do |cci_node|
+      nist, nist_rev = get_nist_reference(cci_file, cci_node.text)
+      control.add_tag(Inspec::Tag.new('cci', cci_node.text))
+      control.add_tag(Inspec::Tag.new('nist', [nist, 'Rev_' + nist_rev]))
+    end
+    control.title = node.xpath('./Rule/title').text
+    # @todo .gsub(/\<.*?\>/, '') pulls out many of the sub-discussion tags that
+    # are in the XCCDF, we need to determine if this is an issue or if - for
+    # the most part - this data is unused.
+    # @todo gsub(/.false/, '.') pulls off the tailing .false text items that
+    # come form the extra metadata < > that the other gsub removes. I am sure
+    # there is a more eleagant way to do this but for now it works.
+    control.desc = node.xpath('./Rule/description').text.gsub(/\<.*?\>/, '').gsub(/.false/, '.')
+    # control.add_newline (nice to have @chris-rock)
+    control.add_tag(Inspec::Tag.new('check', node.xpath('./Rule/check/check-content').text))
+    # control.add_newline (nice to have @chris-rock)
+    control.add_tag(Inspec::Tag.new('fix', node.xpath('./Rule/fixtext').text))
+    # control.add_newline (nice to have @chris-rock)
+    # control.ref = my reference tags
+    # control.add_newline (nice to have @chris-rock)
+    # @todo control.add_footer (nice to have @chris-rock)
+    # the idea is that it would append the default:
+    # 	describe ' ' do" + "\n\n"
+    # 	end" + "\n\n"
+    # before the final 'end' of each control
 
-              If rolconnlimit is -1 or larger than the system documentation limits
-              for any rolname, this is a finding.[/Group/Rule/check/check-content/.]'
-    {newline}
-    tag fix: 'Execute the following SQL as enterprisedb:
-
-              SELECT rolname, rolconnlimit FROM pg_roles;
-
-              For any roles where rolconnlimit is -1 or larger than the system
-              documentation limits, execute this SQL as enterprisedb:
-
-              ALTER USER <role> WITH CONNECTION LIMIT <desired connection limit>[/Group/Rule/fixtext/.]'
-    {newline}
-    describe ' ' do
+    if output_format == 'hash'
+      out.puts control.to_hash
+    else
+      out.puts control.to_ruby
+      # @todo not sure how to hack the object to add on the stub blocks
+      # out.puts "  describe ' ' do" + "\n\n"
+      # out.puts "  end" + "\n\n"
     end
   end
-  === end template ===
-=end
+end
+
+xccdf_to_inspec(xccdf, cci_xml, options[:group], out, output_format)
+out.close if options[:output]
