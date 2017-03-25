@@ -38,7 +38,7 @@ options = {
   cci: nil,
   output: nil,
   group: nil,
-  format: nil
+  form: nil
 }
 
 parser = OptionParser.new do |opts|
