@@ -3,7 +3,6 @@ gem 'inspec', '>=1.17.0'
 require 'inspec'
 require 'nokogiri'
 require 'optparse'
-require 'awesome_print'
 require 'inspec/objects'
 script_version = '1.1.0'
 
@@ -106,7 +105,7 @@ output_format = options[:form].to_s
 
 # @!method reformat_wrapped(string,width)
 # Reformats a given string to a defined word-wrapped width
-# {https://goo.gl/MWE3yl
+# {https://goo.gl/MWE3yl}
 # @param string [<String>] the string to be wrapped
 # @param width [<Integer>] the width that the string will be wrapped to
 #
@@ -130,7 +129,7 @@ def reformat_wrapped(string, width = 78)
 
 # @!method get_benchmark_info(xccdf_file)
 # Finds the XCCDF Benchmark information and returns a hash of the the title,
-# release version and release date
+# release version,release date,desc,version,publisher,source,href
 # @param xccdf_file [FileHandle] the xccdf file you are processing
 #
 # @return benchmark_info[Hash<String>] a hash of the benchmark title, release
@@ -242,7 +241,7 @@ def get_impact(severity)
 end
 
 # @!method xccdf_to_inspec(file, cci_file, group, out, output_format)
-#  Parses the XCCDF file and generates the inspec control stubs.
+# Parses the XCCDF file and generates the inspec control stubs.
 # @param file [FileHandle] The XCCDF file you want to parse
 # @param cci_file [FileHandle] The CCI XML file
 # @param group [String] A csv list of the groups - i.e. controls - you want to
