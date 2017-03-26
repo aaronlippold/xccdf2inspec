@@ -1,11 +1,11 @@
-= Parsing the DISA XCCDF format
+# Parsing the DISA XCCDF format
 
 You can find all the DISA XCCDF files here:
 http://iase.disa.mil/stigs/app-security/database/Pages/index.aspx
 
 The below example shows how the parser maps the values from the XCCDF file to the InSpec control. Should you want to change your 'tag' names, styles etc. please feel free to hack the 'xccdf2inspec' method in the script.
 
-= XCCDF XML to InSpec Control Values
+# XCCDF XML to InSpec Control Values
 ```
 == Example
   control 'V-68875' do
@@ -64,7 +64,7 @@ The below example shows how the parser maps the values from the XCCDF file to th
     end
   end
 ```
-== Old Formatter ( pre InSpec.Control obj use )
+## Old Formatter ( pre InSpec.Control obj use )
 ```
 #     out.puts "control '" + control_name.to_s + "'" + " do "
 # 		out.puts "  impact: " + impact.inspect
