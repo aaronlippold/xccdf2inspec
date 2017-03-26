@@ -1,5 +1,5 @@
 # xccdf2inspec
-WIP: The XCCDF to InSpec parser scans and extracts the controls defined in the DISA XCCDF STIG XML documents and converts them into InSpec control 'stubs' to help ease the pain of inspec profile developers everywhere.
+The XCCDF to InSpec parser scans and extracts the controls defined in the DISA XCCDF STIG XML documents and converts them into InSpec control 'stubs' to help ease the pain of InSpec profile developers everywhere.
 
 # Usage
 ## Command Line
@@ -15,9 +15,8 @@ Usage: xccdf2inspec.rb [options]
     -v, --version                    xccdf2inspec version
     -h, --help                       Displays Help
 ```
-## Options
-
-## Assumptions
+## Documentation
+The script is documented in YARD. (http://yardoc.org) If you should every want documentation.
 
 ## Known Issues
-- Issues welcome :)
+- Issues welcome - please submit suggestions or issues on the board.
