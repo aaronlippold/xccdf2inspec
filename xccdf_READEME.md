@@ -6,6 +6,7 @@ http://iase.disa.mil/stigs/app-security/database/Pages/index.aspx
 The below example shows how the parser maps the values from the XCCDF file to the InSpec control. Should you want to change your 'tag' names, styles etc. please feel free to hack the 'xccdf2inspec' method in the script.
 
 = XCCDF XML to InSpec Control Values
+```
 == Example
   control 'V-68875' do
     # This requires an 'if statement' on the the value of [/Group/Rule/@severity], i.e. mapping the range
@@ -62,9 +63,9 @@ The below example shows how the parser maps the values from the XCCDF file to th
     describe ' ' do
     end
   end
-
+```
 == Old Formatter ( pre InSpec.Control obj use )
-
+```
 #     out.puts "control '" + control_name.to_s + "'" + " do "
 # 		out.puts "  impact: " + impact.inspect
 # 		out.puts "  tag severity: '" + severity.to_s + "'" + "\n\n"
@@ -87,3 +88,4 @@ The below example shows how the parser maps the values from the XCCDF file to th
 # 		out.puts "  describe ' ' do" + "\n\n"
 # 		out.puts "  end"
 # 		out.puts "end" + "\n\n"
+```
