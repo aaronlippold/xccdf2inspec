@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  File: README
+  
+    &mdash; Documentation by YARD 0.9.8
+  
+</title>
+
+  <link rel="stylesheet" href="css/style.css" type="text/css" charset="utf-8" />
+
+  <link rel="stylesheet" href="css/common.css" type="text/css" charset="utf-8" />
+
+<script type="text/javascript" charset="utf-8">
+  pathId = "README";
+  relpath = '';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="_index.html">Index</a> &raquo; 
+    <span class="title">File: README</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><div id='filecontents'>
+<h1 id="label-xccdf2inspec">xccdf2inspec</h1>
+
+<p>The XCCDF to InSpec parser scans and extracts the controls defined in the
+DISA XCCDF STIG XML documents and converts them into InSpec control
+&#39;stubs&#39; to help ease the pain of InSpec profile developers
+everywhere.</p>
+
+<h1 id="label-Usage">Usage</h1>
+
+<h2 id="label-Command+Line">Command Line</h2>
+
+<pre class="code ruby"><code class="ruby">#&gt;ruby xccdf2inspec.rb --help
+Usage: xccdf2inspec.rb [options]
+    -x, --xccdf xccdf                the path to the disa stig xccdf file
+    -c, --cci cci                    the path to the cci xml file
+    -g, --group group1,group2,group3 A CSV list of the group you want to process
+	in the XCCDF file
+    -o, --output output.rb           The name of the inspec file you want
+    -f, --format [ruby|hash]         The format you would like (defualt: ruby)
+    -v, --version                    xccdf2inspec version
+    -h, --help                       Displays Help</code></pre>
+
+<h2 id="label-Documentation">Documentation</h2>
+
+<p>The script is documented in YARD. (<a
+href="http://yardoc.org">yardoc.org</a>) If you should every want
+documentation.</p>
+
+<h2 id="label-Known+Issues">Known Issues</h2>
+<ul><li>
+<p>Issues welcome - please submit suggestions or issues on the board.</p>
+</li></ul>
+</div></div>
+
+      <div id="footer">
+  Generated on Sun Mar 26 19:06:57 2017 by
+  <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.8 (ruby-2.4.0).
+</div>
+
+    </div>
+  </body>
+</html>
