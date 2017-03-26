@@ -64,7 +64,7 @@ parser = OptionParser.new do |opts|
   end
 
   opts.on('-v', '--version', 'xccdf2inspec version') do
-    puts 'xccdf2inspec: version ' + script_version.to_s
+    puts 'xccdf2inspec: v' + script_version.to_s
     exit
   end
 
