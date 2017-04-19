@@ -12,6 +12,7 @@ Usage: xccdf2inspec.rb [options]
 	in the XCCDF file
     -o, --output output.rb           The name of the inspec file you want
     -f, --format [ruby|hash]         The format you would like (defualt: ruby)
+    -s, --seperate [true|false]      If you want to break the controls into seperate files (defualt: false)
     -v, --version                    xccdf2inspec version
     -h, --help                       Displays Help
 ```
