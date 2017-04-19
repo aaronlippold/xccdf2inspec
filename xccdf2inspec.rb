@@ -4,10 +4,11 @@ require 'inspec'
 require 'nokogiri'
 require 'optparse'
 require 'inspec/objects'
-script_version = '1.1.0'
+require 'fileutils'
+script_version = '1.2.0'
 
 # @author Aaron Lippold, lippold@gmail.com
-# @author Michael Limiero
+# @contributor Michael Limiero
 # @abstract XCCDF to InSpec Stubs Parser
 #   The XCCDF to InSpec Parser scans and extracts the Controls defined in the
 #   DISA XCCDF STIG XML documents and converts them into InSpec control 'stubs'
@@ -37,7 +38,8 @@ options = {
   cci: nil,
   output: nil,
   group: nil,
-  form: nil
+  form: nil,
+  seperate: nil
 }
 
 parser = OptionParser.new do |opts|
@@ -61,6 +63,10 @@ parser = OptionParser.new do |opts|
 
   opts.on('-f', '--format [ruby|hash]', 'The format you would like (defualt: ruby)') do |form|
     options[:form] = form
+  end
+
+  opts.on('-s', '--seperate [true|false]', 'If you want to break the controls into seperate files (defualt: false)') do |seperate|
+    options[:seperate] = seperate
   end
 
   opts.on('-v', '--version', 'xccdf2inspec version') do
@@ -87,7 +93,7 @@ if options[:cci].nil?
 end
 
 # File output, either the file passed to the -o option, or to $stdout
-out = if options[:output]
+out = if options[:output] && options[:seperate] != 'true'
         File.open(options[:output], 'w')
       else
         $stdout
@@ -102,6 +108,9 @@ xccdf = Nokogiri::XML(File.open(xccdf_file))
 xccdf.remove_namespaces!
 
 output_format = options[:form].to_s
+seperate_files = options[:seperate].to_s
+seperate_files = 'false' unless seperate_files == 'true'
+
 
 # @!method reformat_wrapped(string,width)
 # Reformats a given string to a defined word-wrapped width
@@ -177,8 +186,10 @@ end
 def print_benchmark_into(xccdf)
   info = get_benchmark_info(xccdf)
   benchmark_info =
-    '=begin' + "\n" \
-    '-----------------' + "\n" \
+    "# encoding: utf-8 \n" \
+    "# \n" \
+    "=begin \n" \
+    "----------------- \n" \
     "Benchmark: #{info[:title]}  \n" \
     "Status: #{info[:status].capitalize} \n\n" +
     reformat_wrapped(info[:desc], width = 78) + "\n\n" \
@@ -190,7 +201,7 @@ def print_benchmark_into(xccdf)
     "----------------- \n" \
     "=end \n\n"
 
-  benchmark_info
+  return benchmark_info
 end
 
 # @!method get_nist_reference(cci_file, cci_number)
@@ -211,7 +222,7 @@ def get_nist_reference(cci_file, cci_number)
   item_node = cci_file.xpath("//cci_list/cci_items/cci_item[@id='#{cci_number}']")[0]
   nist_ref = item_node.xpath('./references/reference[not(@version <= preceding-sibling::reference/@version) and not(@version <=following-sibling::reference/@version)]/@index').text
   nist_ver = item_node.xpath('./references/reference[not(@version <= preceding-sibling::reference/@version) and not(@version <=following-sibling::reference/@version)]/@version').text
-  [nist_ref, nist_ver]
+  return [nist_ref, nist_ver]
 end
 
 # @!method get_impact(severity)
@@ -237,7 +248,7 @@ def get_impact(severity)
            when 'medium' then 0.5
            else 0.7
   end
-  impact
+  return impact
 end
 
 # @!method xccdf_to_inspec(file, cci_file, group, out, output_format)
@@ -260,7 +271,7 @@ end
 # @todo update the method to also generate the higher level dirs and xml for
 # the profile - i.e. the inspec.yaml file, controls directory etc.
 #
-def xccdf_to_inspec(xccdf_f, cci_f, group, out, output_format)
+def xccdf_to_inspec(xccdf_f, cci_f, group, out, output_format,seperate_files)
   if group.nil?
     benchmark_xpath = '//Benchmark/Group'
   else
@@ -274,7 +285,12 @@ def xccdf_to_inspec(xccdf_f, cci_f, group, out, output_format)
                 end
     end
     benchmark_xpath = '//Benchmark/Group' + string
-    end
+  end
+
+  if seperate_files == 'true'
+    FileUtils.mkdir_p("./output") unless File.directory?("./output")
+    Dir.chdir "./output"
+  end
 
   xccdf_f.xpath(benchmark_xpath).each do |node|
     control = Inspec::Control.new
@@ -314,18 +330,32 @@ def xccdf_to_inspec(xccdf_f, cci_f, group, out, output_format)
     # before the final 'end' of each control
 
     if output_format == 'hash'
-      out.puts control.to_hash
-      out.puts "\n"
+      if seperate_files == 'true'
+        file_name = node.xpath('./@id').text
+        myfile = File.new("#{file_name}.hash","w")
+        myfile.puts print_benchmark_into(xccdf_f)
+        myfile.puts control.to_hash
+        myfile.close
+      else
+        out.puts control.to_hash
+        out.puts "\n"
+      end
     else
-      out.puts control.to_ruby
-      out.puts "\n"
-      # out.puts "  describe ' ' do" + "\n\n"
-      # out.puts "  end" + "\n\n"
+      if seperate_files == 'true'
+        file_name = node.xpath('./@id').text
+        myfile = File.new("#{file_name}.rb","w")
+        myfile.puts print_benchmark_into(xccdf_f)
+        myfile.puts control.to_ruby
+        myfile.close
+      else
+        out.puts control.to_ruby
+        out.puts "\n"
+      end
     end
   end
 end
 
-out.puts ":xccdf2inspec: v. #{script_version} \n".prepend('# ')
-out.puts print_benchmark_into(xccdf)
-xccdf_to_inspec(xccdf, cci_xml, options[:group], out, output_format)
+out.puts ":xccdf2inspec: v. #{script_version} \n".prepend("# ") if seperate_files != 'true'
+out.puts print_benchmark_into(xccdf) if seperate_files != 'true'
+xccdf_to_inspec(xccdf, cci_xml, options[:group], out, output_format,seperate_files)
 out.close if options[:output]
