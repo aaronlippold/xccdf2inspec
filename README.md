@@ -17,7 +17,7 @@ Usage: xccdf2inspec.rb [options]
     -h, --help                       Displays Help
 ```
 ## Documentation
-The script is documented in YARD. (http://yardoc.org) If you should every want documentation.
+The script is documented in YARD. (http://yardoc.org) If you should ever want documentation.
 
 ## Known Issues
 - Issues welcome - please submit suggestions or issues on the board.
