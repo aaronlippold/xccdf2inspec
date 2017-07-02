@@ -1,6 +1,5 @@
 #!/usr/local/bin/ruby
-gem 'inspec', '>=1.17.0'
-require 'inspec'
+
 require 'nokogiri'
 require 'optparse'
 require 'inspec/objects'
@@ -222,7 +221,7 @@ def get_nist_reference(cci_file, cci_number)
   item_node = cci_file.xpath("//cci_list/cci_items/cci_item[@id='#{cci_number}']")[0]
   nist_ref = item_node.xpath('./references/reference[not(@version <= preceding-sibling::reference/@version) and not(@version <=following-sibling::reference/@version)]/@index').text
   nist_ver = item_node.xpath('./references/reference[not(@version <= preceding-sibling::reference/@version) and not(@version <=following-sibling::reference/@version)]/@version').text
-  return [nist_ref, nist_ver]
+  [nist_ref, nist_ver]
 end
 
 # @!method get_impact(severity)
@@ -248,7 +247,7 @@ def get_impact(severity)
            when 'medium' then 0.5
            else 0.7
   end
-  return impact
+  impact
 end
 
 # @!method xccdf_to_inspec(file, cci_file, group, out, output_format)
