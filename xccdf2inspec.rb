@@ -51,8 +51,11 @@ parser = OptionParser.new do |opts|
     options[:cci] = cci
   end
 
-  opts.on('-g', '--group group1,group2,group3', 'A CSV list of the group you want to process
-	in the XCCDF file') do |group|
+  opts.on(
+    '-g',
+    '--group group1,group2,group3',
+    'A CSV list of the controls - a.k.a. groups - (V-#####) you want to process
+	   from the XCCDF file') do |group|
    options[:group] = group
  end
 
