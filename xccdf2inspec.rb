@@ -32,6 +32,8 @@ script_version = '1.2.0'
 #    outputs, etc.
 #
 
+ARGV << '-h' if ARGV.empty?
+
 options = {
   xccdf: nil,
   cci: nil,
