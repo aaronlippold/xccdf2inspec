@@ -32,6 +32,8 @@ script_version = '1.2.0'
 #    outputs, etc.
 #
 
+ARGV << '-h' if ARGV.empty?
+
 options = {
   xccdf: nil,
   cci: nil,
@@ -57,7 +59,7 @@ parser = OptionParser.new do |opts|
     'A CSV list of the controls - a.k.a. groups - (V-#####) you want to process
 	   from the XCCDF file') do |group|
    options[:group] = group
- end
+  end
 
   opts.on('-o', '--output output.rb', 'The name of the inspec file you want') do |output|
     options[:output] = output
@@ -99,7 +101,7 @@ out = if options[:output] && options[:seperate] != 'true'
         File.open(options[:output], 'w')
       else
         $stdout
-end
+      end
 
 xccdf_file = options[:xccdf].to_s
 cci_file = options[:cci].to_s
@@ -219,8 +221,6 @@ end
 #   return nil. i.e. use the {#status} var.
 #
 def get_nist_reference(cci_file, cci_number)
-  nist_ref = nil
-  nist_ver = nil
   item_node = cci_file.xpath("//cci_list/cci_items/cci_item[@id='#{cci_number}']")[0]
   nist_ref = item_node.xpath('./references/reference[not(@version <= preceding-sibling::reference/@version) and not(@version <=following-sibling::reference/@version)]/@index').text
   nist_ver = item_node.xpath('./references/reference[not(@version <= preceding-sibling::reference/@version) and not(@version <=following-sibling::reference/@version)]/@version').text
@@ -244,12 +244,11 @@ end
 # values to numbers or to override our hard coded values.
 #
 def get_impact(severity)
-  impact = nil
   impact = case severity
            when 'low' then 0.3
            when 'medium' then 0.5
            else 0.7
-  end
+           end
   impact
 end
 
