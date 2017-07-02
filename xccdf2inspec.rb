@@ -56,8 +56,7 @@ parser = OptionParser.new do |opts|
   opts.on(
     '-g',
     '--group group1,group2,group3',
-    'A CSV list of the controls - a.k.a. groups - (V-#####) you want to process
-	   from the XCCDF file') do |group|
+    'A CSV list of the controls - i.e. groups (V-#####) - you want to process') do |group|
    options[:group] = group
   end
 
@@ -69,7 +68,10 @@ parser = OptionParser.new do |opts|
     options[:form] = form
   end
 
-  opts.on('-s', '--seperate [true|false]', 'If you want to break the controls into seperate files (defualt: false)') do |seperate|
+  opts.on(
+    '-s',
+    '--seperate [true|false]',
+    'If you want to break the controls into seperate files (defualt: false)') do |seperate|
     options[:seperate] = seperate
   end
 
