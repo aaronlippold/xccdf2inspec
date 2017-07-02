@@ -4,7 +4,7 @@ require 'nokogiri'
 require 'optparse'
 require 'inspec/objects'
 require 'fileutils'
-script_version = '1.2.0'
+script_version = '1.3.0'
 
 # @author Aaron Lippold, lippold@gmail.com
 # @contributor Michael Limiero
