@@ -16,9 +16,10 @@ class MyCLI < Thor
   option :cci, require: true, aliases: '-c'
   option :output, required: false, aliases: '-o'
   option :format, required: false, aliases: '-f'
+  option :seperate_files, required: false, aliases: '-s'
   
   def exec
-    Xccdf2Inspec.new(options[:xccdf], options[:cci], options[:output], options[:format])
+    Xccdf2Inspec.new(options[:xccdf], options[:cci], options[:output], options[:format], options[:seperate_files])
   end
 
   map %w{--help -h} => :help
@@ -29,6 +30,7 @@ class MyCLI < Thor
     puts "\t-c --cci : Path to the cci xml file"
     puts "\t-o --output : The name of the inspec file you want"
     puts "\t-f --format [ruby | hash] : The format you would like (defualt: ruby)"
+    puts "\t-s --seperate-files [true | false] : The format you would like (defualt: ruby)"
     puts "\nexample: ./xccdf2inspec exec -c cci_list.xml -x xccdf_file.xml -o myprofile -f ruby \n\n"
   end
 
