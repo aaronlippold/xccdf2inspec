@@ -1,5 +1,5 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<?xml-stylesheet type='text/xsl' href='./cci2html.xsl'?>
+﻿<!-- <?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type='text/xsl' href='cci2html.xsl'?> -->
 <cci_list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://iase.disa.mil/cci cci.xsd" xmlns="http://iase.disa.mil/cci">
 	<metadata>
 		<version>2016-06-27</version>

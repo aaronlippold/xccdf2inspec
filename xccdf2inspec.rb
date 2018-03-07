@@ -4,6 +4,7 @@ require 'nokogiri'
 require 'optparse'
 require 'inspec/objects'
 require 'fileutils'
+require 'open-uri'
 script_version = '1.3.0'
 
 # @author Aaron Lippold, lippold@gmail.com
@@ -141,6 +142,15 @@ def reformat_wrapped(string, width = 78)
   lines << line if line
   lines.join "\n"
   end
+  
+def check_most_recent_disa_cci
+  uri = 'https://iase.disa.mil/stigs/cci/pages/index.aspx'
+  # Perform the HTTP GET request, and return the response
+  page = Nokogiri::HTML(open(uri))   
+  require 'pry'
+  binding.pry
+  #http://iasecontent.disa.mil/stigs/zip/u_cci_list.zip
+end
 
 # @!method get_benchmark_info(xccdf_file)
 # Finds the XCCDF Benchmark information and returns a hash of the the title,
@@ -226,6 +236,7 @@ def get_nist_reference(cci_file, cci_number)
   item_node = cci_file.xpath("//cci_list/cci_items/cci_item[@id='#{cci_number}']")[0]
   nist_ref = item_node.xpath('./references/reference[not(@version <= preceding-sibling::reference/@version) and not(@version <=following-sibling::reference/@version)]/@index').text
   nist_ver = item_node.xpath('./references/reference[not(@version <= preceding-sibling::reference/@version) and not(@version <=following-sibling::reference/@version)]/@version').text
+  puts item_node.attributes
   [nist_ref, nist_ver]
 end
 
@@ -306,11 +317,16 @@ def xccdf_to_inspec(xccdf_f, cci_f, group, out, output_format,seperate_files)
     control.add_tag(Inspec::Tag.new('rid', node.xpath('./Rule/@id').text))
     control.add_tag(Inspec::Tag.new('stig_id', node.xpath('./Rule/version').text))
     # control.add_newline (nice to have @chris-rock)
+    ccis = []
+    nists = []
+    nist_rev = ''
     node.xpath('./Rule/ident').each do |cci_node|
       nist, nist_rev = get_nist_reference(cci_f, cci_node.text)
-      control.add_tag(Inspec::Tag.new('cci', cci_node.text))
-      control.add_tag(Inspec::Tag.new('nist', [nist, 'Rev_' + nist_rev]))
+      ccis.push(cci_node.text)
+      nists.push(nist)
     end
+    control.add_tag(Inspec::Tag.new('cci', ccis))
+    control.add_tag(Inspec::Tag.new('nist', nists.push('Rev_' + nist_rev)))
     control.title = node.xpath('./Rule/title').text
     # @todo .gsub(/\<.*?\>/, '') pulls out many of the sub-discussion tags that
     # are in the XCCDF, we need to determine if this is an issue or if - for
@@ -357,6 +373,8 @@ def xccdf_to_inspec(xccdf_f, cci_f, group, out, output_format,seperate_files)
     end
   end
 end
+
+#check_most_recent_disa_cci
 
 out.puts ":xccdf2inspec: v. #{script_version} \n".prepend("# ") if seperate_files != 'true'
 out.puts print_benchmark_into(xccdf) if seperate_files != 'true'
