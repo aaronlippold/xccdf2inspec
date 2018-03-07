@@ -19,7 +19,6 @@ class Xccdf2Inspec
     @format = 'ruby' if output_format.nil?
     @format = output_format unless output.nil?
     @controls = []
-    fetch_current_cci
     parse_xmls
     parse_controls
     generate_controls
