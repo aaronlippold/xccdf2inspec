@@ -43,7 +43,6 @@ class Xccdf2Inspec
       control.title  = group.rule.title
       control.desc   = group.rule.description 
       control.impact = get_impact(group.rule.severity)
-      control.add_tag(Inspec::Tag.new('severity', group.rule.severity))
       control.add_tag(Inspec::Tag.new('gtitle',   group.title))
       control.add_tag(Inspec::Tag.new('gid',      group.id))
       control.add_tag(Inspec::Tag.new('rid',      group.rule.id))
