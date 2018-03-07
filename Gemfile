@@ -5,3 +5,4 @@ gem "inspec"
 gem "nokogiri"
 gem "OptionParser"
 gem 'nokogiri-happymapper', :require => 'happymapper'
+gem 'word_wrap'

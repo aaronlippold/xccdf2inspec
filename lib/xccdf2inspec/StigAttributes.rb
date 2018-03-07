@@ -24,6 +24,7 @@ class Rule
   include HappyMapper
   tag 'Rule'
   
+  attribute :id, String, tag: 'id'
   attribute :severity, String, tag: 'severity'
   element :version, String, tag: 'version'
   element :title, String, tag: 'title'

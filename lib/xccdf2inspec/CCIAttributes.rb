@@ -5,15 +5,22 @@
 require 'happymapper'
 require 'nokogiri'
 
-class References
+class Reference
   include HappyMapper
-  tag 'references'
+  tag 'reference'
   
   attribute :creator, String, tag: 'creator'
   attribute :title, String, tag: 'title'
   attribute :version, String, tag: 'version'
   attribute :location, String, tag: 'location'
   attribute :index, String, tag: 'index'
+end
+
+class References
+  include HappyMapper
+  tag 'references'
+  
+  has_many :references, Reference, tag: 'reference'
 end
 
 class CCI_Item
@@ -26,7 +33,7 @@ class CCI_Item
   element :contributor, String, tag: 'contributor'
   element :definition, String, tag: 'definition'
   element :type, String, tag: 'type'
-  has_many :references, References, tag: 'references'
+  has_one :references, References, tag: 'references'
 end
 
 class CCI_Items
@@ -52,4 +59,14 @@ class CCI_List
   attribute :schemaLocation, String, :tag => 'schemaLocation', :namespace => 'xmlns' 
   has_one :metadata, Metadata, :tag => 'metadata'
   has_many :cci_items, CCI_Items, :tag => 'cci_items'
+  
+  def fetch_nists(ccis)
+    ccis = [ccis] unless ccis.kind_of?(Array)
+    nists = []
+    nist_ver = cci_items[0].cci_item[0].references.references.max_by(&:version).version
+    ccis.each do |cci| 
+      nists << cci_items[0].cci_item.select{ |item| item.id == cci }.first.references.references.max_by(&:version).index
+    end
+    nists << ('Rev_' + nist_ver)
+  end
 end
