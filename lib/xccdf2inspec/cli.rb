@@ -14,9 +14,11 @@ class MyCLI < Thor
   desc 'exec', 'xccdf2inspec translates an xccdf file to an inspec profile'
   option :xccdf, required: true, aliases: '-x'
   option :cci, require: true, aliases: '-c'
+  option :output, required: false, aliases: '-o'
+  option :format, required: false, aliases: '-f'
   
   def exec
-    Xccdf2Inspec.new(options[:xccdf], options[:cci])
+    Xccdf2Inspec.new(options[:xccdf], options[:cci], options[:output], options[:format])
   end
 
   map %w{--help -h} => :help
@@ -25,7 +27,9 @@ class MyCLI < Thor
     puts "\nXCCDF2Inspec translates an xccdf file to an inspec profile\n\n"
     puts "\t-x --xccdf : Path to the disa stig xccdf file"
     puts "\t-c --cci : Path to the cci xml file"
-    puts "\nexample: ./xccdf2inspec exec -c cci_list.xml -x xccdf_file.xml \n\n"
+    puts "\t-o --output : The name of the inspec file you want"
+    puts "\t-f --format [ruby | hash] : The format you would like (defualt: ruby)"
+    puts "\nexample: ./xccdf2inspec exec -c cci_list.xml -x xccdf_file.xml -o myprofile -f ruby \n\n"
   end
 
   map %w{--version -v} => :print_version

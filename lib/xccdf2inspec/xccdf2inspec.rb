@@ -11,9 +11,13 @@ require 'word_wrap'
 
 
 class Xccdf2Inspec
-  def initialize(xccdf_path, cci_path)
+  def initialize(xccdf_path, cci_path, output, output_format)
     @cci_xml = File.read(cci_path)
     @xccdf_xml = File.read(xccdf_path)
+    @output = 'inspec_profile' if output.nil?
+    @output = output unless output.nil?
+    @format = 'ruby' if output_format.nil?
+    @format = output_format unless output.nil?
     @controls = []
     parse_xmls
     parse_controls
@@ -54,14 +58,26 @@ class Xccdf2Inspec
     end
   end
   
-  def generate_controls
-    Dir.mkdir 'controls' unless Dir.exist?('controls')
+  def generate_controls   
+    require 'pry'
+    binding.pry 
+    Dir.mkdir "#{@output}" unless Dir.exist?("#{@output}")  
+    Dir.mkdir "#{@output}/controls" unless Dir.exist?("#{@output}/controls")  
+    
     @controls.each do |control|
-      file_name = control.id.to_s
-      myfile = File.new("controls/#{file_name}.rb", 'w')
-      width = 80
-      myfile.puts wrap(control.to_ruby)
-      myfile.close
+      if @format == 'ruby'
+        file_name = control.id.to_s
+        myfile = File.new("#{@output}/controls/#{file_name}.rb", 'w')
+        width = 80
+        myfile.puts wrap(control.to_ruby)
+        myfile.close
+      else
+        file_name = control.id.to_s
+        myfile = File.new("#{@output}/controls/#{file_name}.rb", 'w')
+        width = 80
+        myfile.puts wrap(control.to_hash)
+        myfile.close
+      end
     end
   end
   
