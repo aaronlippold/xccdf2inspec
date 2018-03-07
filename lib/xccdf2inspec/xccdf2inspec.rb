@@ -38,7 +38,7 @@ class Xccdf2Inspec
       control.id     = group.id
       control.title  = group.rule.title
       control.desc   = group.rule.description 
-      control.impact = group.rule.severity
+      control.impact = get_impact(group.rule.severity)
       control.add_tag(Inspec::Tag.new('severity', group.rule.severity))
       control.add_tag(Inspec::Tag.new('gtitle',   group.title))
       control.add_tag(Inspec::Tag.new('gid',      group.id))
@@ -63,5 +63,30 @@ class Xccdf2Inspec
       myfile.puts wrap(control.to_ruby)
       myfile.close
     end
+  end
+  
+  # @!method get_impact(severity)
+  #   Takes in the STIG severity tag and converts it to the InSpec #{impact}
+  #   control tag.
+  #   At the moment the mapping is static, so that:
+  #     high => 0.7
+  #     medium => 0.5
+  #     low => 0.3
+  # @param severity [String] the string value you want to map to an InSpec
+  # 'impact' level.
+  #
+  # @return impact [Float] the impact level level mapped to the XCCDF severity
+  # mapped to a float between 0.0 - 1.0.
+  #
+  # @todo Allow for the user to pass in a hash for the desired mapping of text
+  # values to numbers or to override our hard coded values.
+  #
+  def get_impact(severity)
+    impact = case severity
+             when 'low' then 0.3
+             when 'medium' then 0.5
+             else 0.7
+             end
+    impact
   end
 end

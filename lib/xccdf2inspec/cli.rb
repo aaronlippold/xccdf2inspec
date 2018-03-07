@@ -25,7 +25,7 @@ class MyCLI < Thor
     puts "\nXCCDF2Inspec translates an xccdf file to an inspec profile\n\n"
     puts "\t-x --xccdf : Path to the disa stig xccdf file"
     puts "\t-c --cci : Path to the cci xml file"
-    puts "\nexample: ./xccdf2inspec exec -c cci_list.ckl -x \n\n"
+    puts "\nexample: ./xccdf2inspec exec -c cci_list.xml -x xccdf_file.xml \n\n"
   end
 
   map %w{--version -v} => :print_version
