@@ -30,7 +30,7 @@ class MyCLI < Thor
     puts "\t-c --cci : Path to the cci xml file"
     puts "\t-o --output : The name of the inspec file you want"
     puts "\t-f --format [ruby | hash] : The format you would like (defualt: ruby)"
-    puts "\t-s --seperate-files [true | false] : The format you would like (defualt: ruby)"
+    puts "\t-s --seperate-files [true | false] : Output the resulting controls as one or mutlple files (defualt: true)"
     puts "\nexample: ./xccdf2inspec exec -c cci_list.xml -x xccdf_file.xml -o myprofile -f ruby \n\n"
   end
 
