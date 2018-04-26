@@ -9,11 +9,14 @@ require_relative 'CCIAttributes'
 require 'inspec/objects'
 require 'word_wrap'
 require 'pp'
+require 'sanitize'
+require 'CGI'
 
 
 class Xccdf2Inspec
   def initialize(xccdf_path, cci_path, output, output_format, seperated)
     @cci_xml = File.read(cci_path)
+    # @xccdf_xml = CGI.unescapeHTML(File.read(xccdf_path))
     @xccdf_xml = File.read(xccdf_path)
     @output = 'inspec_profile' if output.nil?
     @output = output unless output.nil?
@@ -45,13 +48,23 @@ class Xccdf2Inspec
       control = Inspec::Control.new
       control.id     = group.id
       control.title  = group.rule.title
-      control.desc   = group.rule.description 
+      control.desc   = group.rule.description.vuln_discussion
       control.impact = get_impact(group.rule.severity)
       control.add_tag(Inspec::Tag.new('gtitle',   group.title))
       control.add_tag(Inspec::Tag.new('gid',      group.id))
       control.add_tag(Inspec::Tag.new('rid',      group.rule.id))
       control.add_tag(Inspec::Tag.new('stig_id',  group.rule.version))
       control.add_tag(Inspec::Tag.new('cci', group.rule.idents))
+      control.add_tag(Inspec::Tag.new('false_negatives', group.rule.description.false_negatives)) if group.rule.description.false_negatives != ''
+      control.add_tag(Inspec::Tag.new('false_positives', group.rule.description.false_positives)) if group.rule.description.false_positives != ''
+      control.add_tag(Inspec::Tag.new('documentable', group.rule.description.documentable)) if group.rule.description.documentable != ''
+      control.add_tag(Inspec::Tag.new('mitigations', group.rule.description.false_negatives)) if group.rule.description.mitigations != ''
+      control.add_tag(Inspec::Tag.new('severity_override_guidance', group.rule.description.severity_override_guidance)) if group.rule.description.severity_override_guidance != ''
+      control.add_tag(Inspec::Tag.new('potential_impacts', group.rule.description.potential_impacts)) if group.rule.description.potential_impacts != ''
+      control.add_tag(Inspec::Tag.new('third_party_tools', group.rule.description.third_party_tools)) if group.rule.description.third_party_tools != ''
+      control.add_tag(Inspec::Tag.new('mitigation_controls', group.rule.description.mitigation_controls)) if group.rule.description.mitigation_controls != ''
+      control.add_tag(Inspec::Tag.new('responsibility', group.rule.description.responsibility)) if group.rule.description.responsibility != ''
+      control.add_tag(Inspec::Tag.new('ia_controls', group.rule.description.ia_controls)) if group.rule.description.ia_controls != ''
       control.add_tag(Inspec::Tag.new('nist', @cci_items.fetch_nists(group.rule.idents)))
       control.add_tag(Inspec::Tag.new('check', group.rule.check.check_content))
       control.add_tag(Inspec::Tag.new('fix', group.rule.fixtext))
