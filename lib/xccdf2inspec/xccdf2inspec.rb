@@ -49,7 +49,7 @@ class Xccdf2Inspec
       control.desc   = group.rule.description.vuln_discussion.split('Satisfies: ')[0].strip
       control.impact = get_impact(group.rule.severity)
       control.add_tag(Inspec::Tag.new('gtitle',   group.title))
-      control.add_tag(Inspec::Tag.new('satisfied',   group.rule.description.vuln_discussion.split('Satisfies: ')[1].split(','))) if group.rule.description.vuln_discussion.split('Satisfies: ').length > 1
+      control.add_tag(Inspec::Tag.new('satisfies',   group.rule.description.vuln_discussion.split('Satisfies: ')[1].split(',').map {|srg_id| srg_id.strip })) if group.rule.description.vuln_discussion.split('Satisfies: ').length > 1
       control.add_tag(Inspec::Tag.new('gid',      group.id))
       control.add_tag(Inspec::Tag.new('rid',      group.rule.id))
       control.add_tag(Inspec::Tag.new('stig_id',  group.rule.version))
