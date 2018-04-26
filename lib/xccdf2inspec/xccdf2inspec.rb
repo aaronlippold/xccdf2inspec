@@ -9,14 +9,11 @@ require_relative 'CCIAttributes'
 require 'inspec/objects'
 require 'word_wrap'
 require 'pp'
-require 'sanitize'
-require 'CGI'
 
 
 class Xccdf2Inspec
   def initialize(xccdf_path, cci_path, output, output_format, seperated)
     @cci_xml = File.read(cci_path)
-    # @xccdf_xml = CGI.unescapeHTML(File.read(xccdf_path))
     @xccdf_xml = File.read(xccdf_path)
     @output = 'inspec_profile' if output.nil?
     @output = output unless output.nil?
