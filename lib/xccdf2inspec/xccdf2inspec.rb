@@ -12,7 +12,7 @@ require 'pp'
 
 
 class Xccdf2Inspec
-  def initialize(xccdf_path, cci_path, output, output_format, seperated)
+  def initialize(xccdf_path, cci_path, output, output_format, seperated, replace_tags)
     @cci_xml = File.read(cci_path)
     @xccdf_xml = File.read(xccdf_path)
     @output = 'inspec_profile' if output.nil?
@@ -21,7 +21,9 @@ class Xccdf2Inspec
     @format = output_format unless output_format.nil?
     @seperated = true if seperated.nil? || seperated == 'true'
     @seperated = false if seperated == 'false'
+    @replace_tags = replace_tags.split(',').map {|tags| tags.strip } unless replace_tags.nil?
     @controls = []
+    replace_tags_in_xml unless replace_tags.nil?
     parse_xmls
     parse_controls
     generate_controls
@@ -33,6 +35,12 @@ class Xccdf2Inspec
   def wrap(s, width = 78)
     s.to_s.gsub!(/\\r/, "   \n")
     WordWrap.ww(s.to_s, width)
+  end
+  
+  def replace_tags_in_xml
+    @replace_tags.each do |tag|
+      @xccdf_xml = @xccdf_xml.gsub(%r{(&lt;|<)#{tag}(&gt;|>)}, "$#{tag}")
+    end
   end
   
   def parse_xmls

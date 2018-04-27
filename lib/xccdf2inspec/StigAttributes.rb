@@ -117,7 +117,15 @@ class DescriptionDetailsType
   end
 
   def self.apply(value)
-    DescriptionDetails.parse "<Details>#{value}</Details>"
+    # value = value.gsub('&lt;JBOSS_HOME&gt;', '$JBOSS_HOME')
+    begin
+      DescriptionDetails.parse "<Details>#{value}</Details>"
+    rescue Nokogiri::XML::SyntaxError => e
+      require 'pry'
+      binding.pry
+      puts "A non standard tag was found in:\n\n#{value} \n\nPlease update this in the xml to not use < and > in non tag words."
+      exit
+    end
   end
 
   def self.type
