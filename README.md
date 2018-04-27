@@ -4,6 +4,11 @@ STIG XML documents and converts them into InSpec control 'stubs' to help ease th
 pain of InSpec profile developers everywhere.
 
 # Usage
+
+## Install needed gems
+
+`bundle install`
+
 ## Command Line
 ```
 #>bundle exec ruby xccdf2inspec exec help

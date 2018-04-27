@@ -10,6 +10,7 @@ require 'inspec/objects'
 require 'word_wrap'
 require 'pp'
 
+WIDTH = 80
 
 class Xccdf2Inspec
   def initialize(xccdf_path, cci_path, output, output_format, seperated, replace_tags)
@@ -32,8 +33,9 @@ class Xccdf2Inspec
   
   private
   
-  def wrap(s, width = 78)
-    s.to_s.gsub!(/\\r/, "   \n")
+  def wrap(s, width = WIDTH)
+    s.gsub!(%r{\\r}, "\n")
+    s.gsub!(%r{\\n}, "\n")
     WordWrap.ww(s.to_s, width)
   end
   
@@ -92,7 +94,7 @@ class Xccdf2Inspec
         @controls.each do |control|
           file_name = control.id.to_s
           myfile = File.new("#{@output}/controls/#{file_name}.rb", 'w')
-          myfile.puts wrap(control.to_ruby, 80) + "\n"
+          myfile.puts wrap(control.to_ruby, WIDTH) + "\n"
           myfile.close
         end
       else
@@ -108,7 +110,7 @@ class Xccdf2Inspec
       myfile = File.new("#{@output}/controls/controls.rb", 'w')
       if @format == 'ruby'
         @controls.each do |control|
-          myfile.puts wrap(control.to_ruby, 80)+ "\n"
+          myfile.puts wrap(control.to_ruby, WIDTH)+ "\n"
         end
       else
         @controls.each do |control|
@@ -131,7 +133,7 @@ class Xccdf2Inspec
       "----------------- \n" \
       "Benchmark: #{@xccdf_controls.title}  \n" \
       "Status: #{@xccdf_controls.status} \n\n" +
-      "Description: " + wrap(@xccdf_controls.description, width = 78) + "" \
+      "Description: " + wrap(@xccdf_controls.description, width = WIDTH) + "" \
       "Release Date: #{@xccdf_controls.release_date.release_date} \n" \
       "Version: #{@xccdf_controls.version} \n" \
       "Publisher: #{@xccdf_controls.reference.publisher} \n" \
