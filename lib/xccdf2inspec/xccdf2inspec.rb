@@ -34,8 +34,10 @@ class Xccdf2Inspec
   private
   
   def wrap(s, width = WIDTH)
+    s.gsub!("desc  \"\n    ", "desc  \"")
     s.gsub!(%r{\\r}, "\n")
     s.gsub!(%r{\\n}, "\n")
+    
     WordWrap.ww(s.to_s, width)
   end
   
@@ -55,8 +57,7 @@ class Xccdf2Inspec
       control = Inspec::Control.new
       control.id     = group.id
       control.title  = group.rule.title
-
-      control.desc   = group.rule.description.vuln_discussion.split('Satisfies: ')[0].strip
+      control.desc   = group.rule.description.vuln_discussion.split('Satisfies: ')[0]
       control.impact = get_impact(group.rule.severity)
       control.add_tag(Inspec::Tag.new('gtitle',   group.title))
       control.add_tag(Inspec::Tag.new('satisfies',   group.rule.description.vuln_discussion.split('Satisfies: ')[1].split(',').map {|srg_id| srg_id.strip })) if group.rule.description.vuln_discussion.split('Satisfies: ').length > 1
@@ -102,7 +103,6 @@ class Xccdf2Inspec
           file_name = control.id.to_s
           myfile = File.new("#{@output}/controls/#{file_name}.rb", 'w')
           PP.pp(control.to_hash, myfile)
-          myfile.puts "\n"
           myfile.close
         end
       end
@@ -114,8 +114,8 @@ class Xccdf2Inspec
         end
       else
         @controls.each do |control|
+          control.desc = control.desc.strip
           PP.pp(control.to_hash, myfile)
-          myfile.puts "\n"
         end
       end
       myfile.close
