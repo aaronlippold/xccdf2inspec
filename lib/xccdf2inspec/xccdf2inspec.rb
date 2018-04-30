@@ -1,5 +1,5 @@
 #!/usr/local/bin/ruby
-# encoding: utf-8
+
 # author: Matthew Dromazos
 
 require 'nokogiri'
@@ -22,7 +22,7 @@ class Xccdf2Inspec
     @format = output_format unless output_format.nil?
     @seperated = true if seperated.nil? || seperated == 'true'
     @seperated = false if seperated == 'false'
-    @replace_tags = replace_tags.split(',').map {|tags| tags.strip } unless replace_tags.nil?
+    @replace_tags = replace_tags.split(',').map(&:strip) unless replace_tags.nil?
     @controls = []
     replace_tags_in_xml unless replace_tags.nil?
     parse_xmls
@@ -30,28 +30,28 @@ class Xccdf2Inspec
     generate_controls
     print_benchmark_info
   end
-  
+
   private
-  
+
   def wrap(s, width = WIDTH)
-    s.gsub!("desc  \"\n    ", "desc  \"")
-    s.gsub!(%r{\\r}, "\n")
-    s.gsub!(%r{\\n}, "\n")
-    
+    s.gsub!("desc  \"\n    ", 'desc  "')
+    s.gsub!(/\\r/, "\n")
+    s.gsub!(/\\n/, "\n")
+
     WordWrap.ww(s.to_s, width)
   end
-  
+
   def replace_tags_in_xml
     @replace_tags.each do |tag|
-      @xccdf_xml = @xccdf_xml.gsub(%r{(&lt;|<)#{tag}(&gt;|>)}, "$#{tag}")
+      @xccdf_xml = @xccdf_xml.gsub(/(&lt;|<)#{tag}(&gt;|>)/, "$#{tag}")
     end
   end
-  
+
   def parse_xmls
     @cci_items = CCI_List.parse(@cci_xml)
     @xccdf_controls = Benchmark.parse(@xccdf_xml)
   end
-  
+
   def parse_controls
     @xccdf_controls.group.each do |group|
       control = Inspec::Control.new
@@ -59,12 +59,14 @@ class Xccdf2Inspec
       control.title  = group.rule.title
       control.desc   = group.rule.description.vuln_discussion.split('Satisfies: ')[0]
       control.impact = get_impact(group.rule.severity)
-      control.add_tag(Inspec::Tag.new('gtitle',   group.title))
-      control.add_tag(Inspec::Tag.new('satisfies',   group.rule.description.vuln_discussion.split('Satisfies: ')[1].split(',').map {|srg_id| srg_id.strip })) if group.rule.description.vuln_discussion.split('Satisfies: ').length > 1
+      control.add_tag(Inspec::Tag.new('gtitle', group.title))
+      control.add_tag(Inspec::Tag.new('satisfies', group.rule.description.vuln_discussion.split('Satisfies: ')[1].split(',').map(&:strip))) if group.rule.description.vuln_discussion.split('Satisfies: ').length > 1
       control.add_tag(Inspec::Tag.new('gid',      group.id))
       control.add_tag(Inspec::Tag.new('rid',      group.rule.id))
       control.add_tag(Inspec::Tag.new('stig_id',  group.rule.version))
+      control.add_tag(Inspec::Tag.new('fix_id', group.rule.fix.id))
       control.add_tag(Inspec::Tag.new('cci', group.rule.idents))
+      control.add_tag(Inspec::Tag.new('nist', @cci_items.fetch_nists(group.rule.idents)))
       control.add_tag(Inspec::Tag.new('false_negatives', group.rule.description.false_negatives)) if group.rule.description.false_negatives != ''
       control.add_tag(Inspec::Tag.new('false_positives', group.rule.description.false_positives)) if group.rule.description.false_positives != ''
       control.add_tag(Inspec::Tag.new('documentable', group.rule.description.documentable)) if group.rule.description.documentable != ''
@@ -75,17 +77,15 @@ class Xccdf2Inspec
       control.add_tag(Inspec::Tag.new('mitigation_controls', group.rule.description.mitigation_controls)) if group.rule.description.mitigation_controls != ''
       control.add_tag(Inspec::Tag.new('responsibility', group.rule.description.responsibility)) if group.rule.description.responsibility != ''
       control.add_tag(Inspec::Tag.new('ia_controls', group.rule.description.ia_controls)) if group.rule.description.ia_controls != ''
-      control.add_tag(Inspec::Tag.new('nist', @cci_items.fetch_nists(group.rule.idents)))
       control.add_tag(Inspec::Tag.new('check', group.rule.check.check_content))
       control.add_tag(Inspec::Tag.new('fix', group.rule.fixtext))
-      control.add_tag(Inspec::Tag.new('fix_id', group.rule.fix.id))
-      
+
       @controls << control
     end
   end
-  
+
   def generate_controls
-    Dir.mkdir "#{@output}" unless Dir.exist?("#{@output}")  
+    Dir.mkdir @output.to_s unless Dir.exist?(@output.to_s)
     Dir.mkdir "#{@output}/controls" unless Dir.exist?("#{@output}/controls")
     Dir.mkdir "#{@output}/libaries" unless Dir.exist?("#{@output}/libraries")
     myfile = File.new("#{@output}/README.md", 'w')
@@ -110,7 +110,7 @@ class Xccdf2Inspec
       myfile = File.new("#{@output}/controls/controls.rb", 'w')
       if @format == 'ruby'
         @controls.each do |control|
-          myfile.puts wrap(control.to_ruby, WIDTH)+ "\n"
+          myfile.puts wrap(control.to_ruby, WIDTH) + "\n"
         end
       else
         @controls.each do |control|
@@ -121,7 +121,7 @@ class Xccdf2Inspec
       myfile.close
     end
   end
-  
+
   # @!method print_benchmark_info(info)
   # writes benchmark info to profile inspec.yml file
   #
@@ -132,8 +132,8 @@ class Xccdf2Inspec
       "=begin \n" \
       "----------------- \n" \
       "Benchmark: #{@xccdf_controls.title}  \n" \
-      "Status: #{@xccdf_controls.status} \n\n" +
-      "Description: " + wrap(@xccdf_controls.description, width = WIDTH) + "" \
+      "Status: #{@xccdf_controls.status} \n\n" \
+      'Description: ' + wrap(@xccdf_controls.description, width = WIDTH) + '' \
       "Release Date: #{@xccdf_controls.release_date.release_date} \n" \
       "Version: #{@xccdf_controls.version} \n" \
       "Publisher: #{@xccdf_controls.reference.publisher} \n" \
@@ -145,7 +145,7 @@ class Xccdf2Inspec
     myfile = File.new("#{@output}/inspec.yml", 'w')
     myfile.puts benchmark_info
   end
-  
+
   # @!method get_impact(severity)
   #   Takes in the STIG severity tag and converts it to the InSpec #{impact}
   #   control tag.
