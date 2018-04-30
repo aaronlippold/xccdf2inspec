@@ -6,3 +6,4 @@ gem "nokogiri"
 gem "OptionParser"
 gem 'nokogiri-happymapper', :require => 'happymapper'
 gem 'word_wrap'
+gem 'colorize'
