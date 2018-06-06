@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby
+ #!/usr/bin/env ruby
 
 # author: Aaron Lippold
 # author: Rony Xavier rx294@nyu.edu
@@ -18,9 +18,10 @@ class MyCLI < Thor
   option :format, required: false, aliases: '-f'
   option :seperate_files, required: false, aliases: '-s'
   option :replace_tags, require: false, aliases: '-r'
+  option :verbose, require: true, aliases: '-v'
 
   def exec
-    Xccdf2Inspec.new(options[:xccdf], options[:cci], options[:output], options[:format], options[:seperate_files], options[:replace_tags])
+    Xccdf2Inspec.new(options[:xccdf], options[:cci], options[:output], options[:format], options[:seperate_files], options[:replace_tags], options[:verbose])
   end
 
   map %w[--help -h] => :help
@@ -33,6 +34,7 @@ class MyCLI < Thor
     puts "\t-f --format [ruby | hash] : The format you would like (defualt: ruby)"
     puts "\t-s --seperate-files [true | false] : Output the resulting controls as one or mutlple files (defualt: true)"
     puts "\t-r --replace-tags array (case sensitive): A comma seperated list to replace tags with a $ if found in a group rules description tag"
+    puts "\t-v --verbose : Prints out each IA Control"
     puts "\nexample: ./xccdf2inspec exec -c cci_list.xml -x xccdf_file.xml -o myprofile -f ruby \n\n"
   end
 
