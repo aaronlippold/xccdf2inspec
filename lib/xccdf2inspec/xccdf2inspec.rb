@@ -14,7 +14,7 @@ require 'roo-xls'
 WIDTH = 80
 
 class Xccdf2Inspec
-  def initialize(xccdf_path, cci_path, output, output_format, seperated, replace_tags, verbose)
+  def initialize(xccdf_path, cci_path, output, output_format, seperated, replace_tags, mapping_xls, verbose)
     @cci_xml = File.read(cci_path)
     @xccdf_xml = File.read(xccdf_path)
     @output = 'inspec_profile' if output.nil?
@@ -25,10 +25,12 @@ class Xccdf2Inspec
     @seperated = false if seperated == 'false'
     @replace_tags = replace_tags.split(',').map(&:strip) unless replace_tags.nil?
     @controls = []
+    @mappingxls = '' if mapping_xls.nil?
+    @mappingxls = mapping_xls unless mapping_xls.nil?
     @verbose = verbose
     replace_tags_in_xml unless replace_tags.nil?
     parse_xmls
-    parse_controls(verbose)
+    parse_controls(verbose, mapping_xls)
     generate_controls
     print_benchmark_info
   end
@@ -54,7 +56,7 @@ class Xccdf2Inspec
     @xccdf_controls = Benchmark.parse(@xccdf_xml)
   end
 
-  def parse_controls(verbose)
+  def parse_controls(verbose, mappingxls)
     @xccdf_controls.group.each do |group|
       control = Inspec::Control.new
       control.id     = group.id
@@ -71,7 +73,7 @@ class Xccdf2Inspec
       if group.rule.description.ia_controls != ''
         nist_tag = []
         group.rule.description.ia_controls.split(/\s*,\s*/).each do |name|
-          x = mapperFunc(name).collect{|x| x.strip || x }
+          x = mapperFunc(name, mappingxls).collect{|x| x.strip || x }
           nist_tag << x
         end
         nist_tag << "Rev_4" 
@@ -183,8 +185,11 @@ class Xccdf2Inspec
   # @todo Allow for the user to pass in a hash for the desired mapping of text
   # values to numbers or to override our hard coded values.
   #
-  def mapperFunc(diacap)
-    xlsx = Spreadsheet.open "./DIACAP.xls"
+  def mapperFunc(diacap, mappingxls)
+    if mappingxls.nil?
+      p "Mapping XLS is empty"
+    end
+    xlsx = Spreadsheet.open mappingxls
     sheet = xlsx.worksheet 0
     sheet.each do |row|
       if row[0] == diacap
