@@ -30,7 +30,7 @@ class Xccdf2Inspec
     @verbose = verbose
     replace_tags_in_xml unless replace_tags.nil?
     parse_xmls
-    parse_controls(verbose, mapping_xls)
+    parse_controls
     generate_controls
     print_benchmark_info
   end
@@ -56,7 +56,7 @@ class Xccdf2Inspec
     @xccdf_controls = Benchmark.parse(@xccdf_xml)
   end
 
-  def parse_controls(verbose, mappingxls)
+  def parse_controls()
     @xccdf_controls.group.each do |group|
       control = Inspec::Control.new
       control.id     = group.id
@@ -73,7 +73,7 @@ class Xccdf2Inspec
       if group.rule.description.ia_controls != ''
         nist_tag = []
         group.rule.description.ia_controls.split(/\s*,\s*/).each do |name|
-          x = mapperFunc(name, mappingxls).collect{|x| x.strip || x }
+          x = diacap_to_nist_mapping(name, @mappingxls).collect{|x| x.strip || x }
           nist_tag << x
         end
         nist_tag << "Rev_4" 
@@ -90,16 +90,17 @@ class Xccdf2Inspec
       control.add_tag(Inspec::Tag.new('third_party_tools', group.rule.description.third_party_tools)) if group.rule.description.third_party_tools != ''
       control.add_tag(Inspec::Tag.new('mitigation_controls', group.rule.description.mitigation_controls)) if group.rule.description.mitigation_controls != ''
       control.add_tag(Inspec::Tag.new('responsibility', group.rule.description.responsibility)) if group.rule.description.responsibility != ''
-      if group.rule.description.ia_controls != ''
-        diacap_array = []
-        group.rule.description.ia_controls.split(/\s*,\s*/).each do |diacap|
-          diacap_array << diacap
-        end
-        control.add_tag(Inspec::Tag.new('diacap', diacap_array))
-      else
-        next
-      end
-      puts group.rule.description.ia_controls if verbose == 'true'
+      # if group.rule.description.ia_controls != ''
+      #   diacap_array = []
+      #   group.rule.description.ia_controls.split(/\s*,\s*/).each do |diacap|
+      #     diacap_array << diacap
+      #   end
+      #   control.add_tag(Inspec::Tag.new('diacap', diacap_array))
+      # else
+      #   next
+      # end
+      control.add_tag(Inspec::Tag.new('diacap', group.rule.description.ia_controls.split(/\s*,\s*/))) if group.rule.description.ia_controls != ''
+      puts group.rule.description.ia_controls if @verbose == 'true'
       control.add_tag(Inspec::Tag.new('check', group.rule.check.check_content))
       control.add_tag(Inspec::Tag.new('fix', group.rule.fixtext))
 
@@ -185,7 +186,7 @@ class Xccdf2Inspec
   # @todo Allow for the user to pass in a hash for the desired mapping of text
   # values to numbers or to override our hard coded values.
   #
-  def mapperFunc(diacap, mappingxls)
+  def diacap_to_nist_mapping(diacap, mappingxls)
     if mappingxls.nil?
       p "Mapping XLS is empty"
     end
