@@ -127,20 +127,14 @@ class Xccdf2Inspec
   #
   def print_benchmark_info
     benchmark_info =
-      "# encoding: utf-8 \n" \
-      "# \n" \
-      "=begin \n" \
-      "----------------- \n" \
-      "Benchmark: #{@xccdf_controls.title}  \n" \
-      "Status: #{@xccdf_controls.status} \n\n" \
-      'Description: ' + wrap(@xccdf_controls.description, width = WIDTH) + '' \
-      "Release Date: #{@xccdf_controls.release_date.release_date} \n" \
-      "Version: #{@xccdf_controls.version} \n" \
-      "Publisher: #{@xccdf_controls.reference.publisher} \n" \
-      "Source: #{@xccdf_controls.reference.source} \n" \
-      "uri: #{@xccdf_controls.reference.href} \n" \
-      "----------------- \n" \
-      "=end \n\n"
+"name: #{@output}
+title: #{@xccdf_controls.title}
+maintainer: The Authors
+copyright: The Authors
+copyright_email: you@example.com
+license: Apache-2.0
+summary: An InSpec Compliance Profile
+version: 0.1.0"
 
     myfile = File.new("#{@output}/inspec.yml", 'w')
     myfile.puts benchmark_info
