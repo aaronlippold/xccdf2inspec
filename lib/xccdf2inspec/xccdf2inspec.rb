@@ -9,11 +9,12 @@ require_relative 'CCIAttributes'
 require 'inspec/objects'
 require 'word_wrap'
 require 'pp'
+require 'roo-xls'
 
 WIDTH = 80
 
 class Xccdf2Inspec
-  def initialize(xccdf_path, cci_path, output, output_format, seperated, replace_tags)
+  def initialize(xccdf_path, cci_path, output, output_format, seperated, replace_tags, mapping_xls, verbose)
     @cci_xml = File.read(cci_path)
     @xccdf_xml = File.read(xccdf_path)
     @output = 'inspec_profile' if output.nil?
@@ -24,6 +25,9 @@ class Xccdf2Inspec
     @seperated = false if seperated == 'false'
     @replace_tags = replace_tags.split(',').map(&:strip) unless replace_tags.nil?
     @controls = []
+    @mappingxls = '' if mapping_xls.nil?
+    @mappingxls = mapping_xls unless mapping_xls.nil?
+    @verbose = verbose
     replace_tags_in_xml unless replace_tags.nil?
     parse_xmls
     parse_controls
@@ -52,7 +56,7 @@ class Xccdf2Inspec
     @xccdf_controls = Benchmark.parse(@xccdf_xml)
   end
 
-  def parse_controls
+  def parse_controls()
     @xccdf_controls.group.each do |group|
       control = Inspec::Control.new
       control.id     = group.id
@@ -66,7 +70,17 @@ class Xccdf2Inspec
       control.add_tag(Inspec::Tag.new('stig_id',  group.rule.version))
       control.add_tag(Inspec::Tag.new('fix_id', group.rule.fix.id))
       control.add_tag(Inspec::Tag.new('cci', group.rule.idents))
-      control.add_tag(Inspec::Tag.new('nist', @cci_items.fetch_nists(group.rule.idents)))
+      if group.rule.description.ia_controls != ''
+        nist_tag = []
+        group.rule.description.ia_controls.split(/\s*,\s*/).each do |name|
+          x = diacap_to_nist_mapping(name, @mappingxls).collect{|x| x.strip || x }
+          nist_tag << x
+        end
+        nist_tag << "Rev_4" 
+        control.add_tag(Inspec::Tag.new('nist', nist_tag.flatten.uniq))    
+      else  
+        control.add_tag(Inspec::Tag.new('nist', @cci_items.fetch_nists(group.rule.idents)))
+      end
       control.add_tag(Inspec::Tag.new('false_negatives', group.rule.description.false_negatives)) if group.rule.description.false_negatives != ''
       control.add_tag(Inspec::Tag.new('false_positives', group.rule.description.false_positives)) if group.rule.description.false_positives != ''
       control.add_tag(Inspec::Tag.new('documentable', group.rule.description.documentable)) if group.rule.description.documentable != ''
@@ -76,7 +90,17 @@ class Xccdf2Inspec
       control.add_tag(Inspec::Tag.new('third_party_tools', group.rule.description.third_party_tools)) if group.rule.description.third_party_tools != ''
       control.add_tag(Inspec::Tag.new('mitigation_controls', group.rule.description.mitigation_controls)) if group.rule.description.mitigation_controls != ''
       control.add_tag(Inspec::Tag.new('responsibility', group.rule.description.responsibility)) if group.rule.description.responsibility != ''
-      control.add_tag(Inspec::Tag.new('ia_controls', group.rule.description.ia_controls)) if group.rule.description.ia_controls != ''
+      # if group.rule.description.ia_controls != ''
+      #   diacap_array = []
+      #   group.rule.description.ia_controls.split(/\s*,\s*/).each do |diacap|
+      #     diacap_array << diacap
+      #   end
+      #   control.add_tag(Inspec::Tag.new('diacap', diacap_array))
+      # else
+      #   next
+      # end
+      control.add_tag(Inspec::Tag.new('diacap', group.rule.description.ia_controls.split(/\s*,\s*/))) if group.rule.description.ia_controls != ''
+      puts group.rule.description.ia_controls if @verbose == 'true'
       control.add_tag(Inspec::Tag.new('check', group.rule.check.check_content))
       control.add_tag(Inspec::Tag.new('fix', group.rule.fixtext))
 
@@ -156,6 +180,18 @@ version: 0.1.0"
   # @todo Allow for the user to pass in a hash for the desired mapping of text
   # values to numbers or to override our hard coded values.
   #
+  def diacap_to_nist_mapping(diacap, mappingxls)
+    if mappingxls.nil?
+      p "Mapping XLS is empty"
+    end
+    xlsx = Spreadsheet.open mappingxls
+    sheet = xlsx.worksheet 0
+    sheet.each do |row|
+      if row[0] == diacap
+        return row[29].slice(row[29].index(':')+2..-1).split(/\s*,\s*/)
+      end
+    end    
+  end
   def get_impact(severity)
     impact = case severity
              when 'low' then 0.3
