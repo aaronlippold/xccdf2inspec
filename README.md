@@ -1,5 +1,5 @@
 # MERGED into `inspec_tools` gem
-## NOTE: This repo is **no longer maintained** here. Please use [inspec-tools](https://github.com/mitre/inspec-tools).
+## NOTE: This repo is **no longer maintained** here. Please use [inspec_tools](https://github.com/mitre/inspec_tools).
 
 # xccdf2inspec
 The XCCDF to InSpec parser scans and extracts the controls defined in the DISA XCCDF 
